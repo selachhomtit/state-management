@@ -18,3 +18,10 @@ export type Category = {
     creationAt: string;
     updatedAt: string;
 }
+export type CreateProductInput = {
+  title: string;
+  price: number;
+  description: string;
+  categoryId: number;
+  images: string[];
+};

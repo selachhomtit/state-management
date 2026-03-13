@@ -1,125 +1,75 @@
 "use client";
 
-import {
-  useAddProductMutation,
-  useGetProductByIdQuery,
-  useGetProductsQuery,
-} from "@/lib/features/products/productApi";
+import { useGetProductsQuery } from "@/lib/features/products/productApi";
 
 export default function ProductCard() {
-  const { data: products, isLoading, isError } = useGetProductsQuery();
+  const { data = [], isLoading, isError, isFetching } = useGetProductsQuery();
 
-  const { data: product } = useGetProductByIdQuery(1);
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 text-center text-gray-500">
+        Loading products...
+      </div>
+    );
+  }
 
-  const [addProduct] = useAddProductMutation();
-
-  console.log("All Products:", products);
-  console.log("Single Product:", product);
-
-  const handleAddProduct = async () => {
-    try {
-      const res = await addProduct({
-        title: "New Product",
-        price: 50,
-        description: "Test product",
-        category: "electronics",
-        image: "https://i.pravatar.cc", // fix: image not images
-      }).unwrap();
-
-      console.log("Product Added:", res);
-    } catch (err) {
-      console.error("Add Product Error:", err);
-    }
-  };
-
-  if (isLoading) return <p style={{ padding: 20 }}>Loading products...</p>;
-
-  if (isError) return <p style={{ padding: 20 }}>Failed to load products</p>;
+  if (isError) {
+    return (
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 text-center text-red-600">
+        Failed to load products.
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ marginBottom: 20 }}>Product List</h1>
-
-      {/* PRODUCT GRID */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
-          gap: 20,
-        }}
-      >
-        {products?.map((item) => (
-          <div
-            key={item.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              padding: 15,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              background: "#fff",
-            }}
-          >
-            <img
-              src={item.image} // fix
-              alt={item.title}
-              style={{
-                width: "100%",
-                height: 160,
-                objectFit: "cover",
-                borderRadius: 8,
-                marginBottom: 10,
-              }}
-            />
-
-            <h3 style={{ fontSize: 16 }}>{item.title}</h3>
-
-            <p style={{ fontWeight: "bold", color: "#0a7" }}>
-              ${item.price}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <hr style={{ margin: "40px 0" }} />
-
-      {/* SINGLE PRODUCT */}
-      {product && (
-        <div
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: 10,
-            padding: 20,
-            maxWidth: 400,
-          }}
-        >
-          <h2>Single Product</h2>
-
-          <img
-            src={product.image} // fix
-            width={200}
-            style={{ borderRadius: 10 }}
-            alt={product.title}
-          />
-
-          <h3>{product.title}</h3>
-          <p>${product.price}</p>
+    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden max-w-md mx-auto">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">
+            All Products
+          </h2>
+          {isFetching && (
+            <span className="text-xs text-blue-500 animate-pulse">Refreshing...</span>
+          )}
         </div>
-      )}
 
-      <button
-        onClick={handleAddProduct}
-        style={{
-          marginTop: 30,
-          padding: "10px 20px",
-          background: "#0070f3",
-          color: "white",
-          border: "none",
-          borderRadius: 6,
-          cursor: "pointer",
-        }}
-      >
-        Add Product
-      </button>
+        {data.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">
+            No products found.
+          </p>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            {data.map((product) => (
+              <div
+                key={product.id}
+                className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+              >
+                {product.images?.[0] && (
+                  <img
+                    src={product.images[0].startsWith("http") ? product.images[0] : `https://api.escuelajs.co${product.images[0]}`}
+                    alt={product.title}
+                    className="w-16 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://placehold.co/64?text=?";
+                    }}
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-gray-900 truncate">
+                    {product.title}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    #{product.id} • {product.category?.name || "—"}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-green-700 whitespace-nowrap">
+                  ${product.price.toFixed(2)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
