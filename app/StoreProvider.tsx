@@ -9,10 +9,12 @@ export default function StoreProvider({
   children: React.ReactNode
 }) {
   const storeRef = useRef<AppStore>(undefined)
+  // eslint-disable-next-line react-hooks/refs
   if (!storeRef.current) {
     // Create the store instance the first time this renders
     storeRef.current = makeStore()
   }
 
+  // eslint-disable-next-line react-hooks/refs
   return <Provider store={storeRef.current}>{children}</Provider>
 }
