@@ -5,7 +5,7 @@ export interface CounterState {
   value: number
 }
 
-// 1. define initialstate
+// 1. define initialise
 const initialState: CounterState = {
   value: 0,
 }
