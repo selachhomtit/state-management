@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner" // Import sonner for notifications
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -25,7 +26,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { MoreHorizontalIcon } from "lucide-react"
+import { MoreHorizontalIcon, Loader2 } from "lucide-react"
 import { ProductResponse } from "@/lib/types/product-type"
 import {
     useGetProductsQuery,
@@ -35,7 +36,6 @@ import {
 
 export function ProductListClient() {
     const { data: products = [], isLoading, isError, error } = useGetProductsQuery()
-
     const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation()
     const [deleteProduct] = useDeleteProductMutation()
 
@@ -63,6 +63,7 @@ export function ProductListClient() {
         if (!selectedProduct) return
 
         try {
+            // Only send fields that changed to keep it a partial update
             await updateProduct({
                 id: selectedProduct.id,
                 title: formData.title,
@@ -71,49 +72,31 @@ export function ProductListClient() {
             }).unwrap()
 
             setIsDialogOpen(false)
-            alert("✅ Product updated successfully!")
-        } catch (err: unknown) {
-            const message =
-                (err as any)?.data?.message ||
-                (err as any)?.message ||
-                "Unknown error"
-
-            alert(`❌ Update failed: ${message}`)
+            toast.success("Product updated successfully")
+        } catch (err: any) {
+            const errorMessage = err?.data?.message || "Failed to update product"
+            toast.error(errorMessage)
         }
     }
 
     const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this product?")) return
+        // You can replace window.confirm with a Shadcn AlertDialog later
+        if (!confirm("Are you sure?")) return
 
         try {
             setDeletingId(id)
-
             await deleteProduct(id).unwrap()
-
-            alert("✅ Product deleted successfully!")
-        } catch (err: unknown) {
-            const message =
-                (err as any)?.data?.message ||
-                (err as any)?.message ||
-                "Unknown error"
-
-            alert(`❌ Delete failed: ${message}`)
+            toast.success("Product deleted successfully")
+        } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to delete product")
         } finally {
             setDeletingId(null)
         }
     }
 
-    if (isLoading) return <p className="text-center py-8">Loading products...</p>
+    if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
 
-    if (isError)
-        return (
-            <p className="text-center py-8 text-red-500">
-                {(error as any)?.data?.message ?? "Something went wrong"}
-            </p>
-        )
-
-    if (products.length === 0)
-        return <p className="text-center py-8">No products found</p>
+    if (isError) return <p className="text-center py-8 text-red-500">Error loading products.</p>
 
     return (
         <>
@@ -123,7 +106,7 @@ export function ProductListClient() {
                         <TableHead>Product</TableHead>
                         <TableHead>Price</TableHead>
                         <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-right w-20">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -135,8 +118,8 @@ export function ProductListClient() {
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="size-8">
-                                            <MoreHorizontalIcon />
+                                        <Button variant="ghost" size="icon">
+                                            <MoreHorizontalIcon className="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
@@ -145,7 +128,7 @@ export function ProductListClient() {
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
-                                            variant="destructive"
+                                            className="text-destructive focus:text-destructive"
                                             onClick={() => handleDelete(product.id)}
                                             disabled={deletingId === product.id}
                                         >
@@ -165,30 +148,30 @@ export function ProductListClient() {
                         <DialogTitle>Update Product</DialogTitle>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-4 py-4">
-                        <Input
-                            placeholder="Product title"
-                            value={formData.title}
-                            onChange={(e) =>
-                                setFormData({ ...formData, title: e.target.value })
-                            }
-                        />
-                        <Input
-                            placeholder="Price"
-                            type="number"
-                            value={formData.price}
-                            onChange={(e) =>
-                                setFormData({ ...formData, price: e.target.value })
-                            }
-                        />
-                        <Input
-                            placeholder="Category ID"
-                            type="number"
-                            value={formData.categoryId}
-                            onChange={(e) =>
-                                setFormData({ ...formData, categoryId: e.target.value })
-                            }
-                        />
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Title</label>
+                            <Input
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Price</label>
+                            <Input
+                                type="number"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label className="text-sm font-medium">Category ID</label>
+                            <Input
+                                type="number"
+                                value={formData.categoryId}
+                                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                            />
+                        </div>
                     </div>
 
                     <DialogFooter>
@@ -196,7 +179,8 @@ export function ProductListClient() {
                             Cancel
                         </Button>
                         <Button onClick={handleUpdate} disabled={isUpdating}>
-                            {isUpdating ? "Saving..." : "Save"}
+                            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
