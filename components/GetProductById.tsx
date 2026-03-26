@@ -1,5 +1,5 @@
 "use client";
-import { useGetProductByIdQuery } from "@/lib/features/products/productApi";
+import { useGetProductByIdQuery } from "@/lib/features/products/product-api";
 import { useState } from "react";
 
 export default function GetProductById() {

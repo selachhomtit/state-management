@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetProductsQuery } from "@/lib/features/products/productApi";
+import { useGetProductsQuery } from "@/lib/features/products/product-api";
 
 export default function ProductCard() {
   const { data = [], isLoading, isError, isFetching } = useGetProductsQuery();

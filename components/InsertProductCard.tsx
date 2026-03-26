@@ -1,5 +1,5 @@
 "use client";
-import { useAddProductMutation } from "@/lib/features/products/productApi";
+import { useAddProductMutation } from "@/lib/features/products/product-api";
 import { CreateProductInput, ProductResponse } from "@/lib/types/product-type";
 import { useState } from "react";
 
